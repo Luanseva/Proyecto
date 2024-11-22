@@ -1,0 +1,327 @@
+---
+title: "Análisis estadístico de Cephaloscoema"
+author: Dayrana Daniela Celedón Gámez, Farid Camilo Pedroza Flores & Luz Andrea Sena
+  Vanegas
+date: "2024-11-22"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+El presente documeto, tiene como objetivo analizar los datos de tamaño de individuos de Cephaloscoema recolectados en 6 puntos de muestreo distintos en el campus de la Universidad Nacional de Colombia Sede de La Paz.
+
+El conjunto de datos denominados *Cephaloscoema* consta de dos columnas principales:
+*Size*: El tamaño de los insectos y *Group*: El grupo de los seis puntos al que se asigna el tamaño de los insectos.
+
+Para poder llevar a cabo el funcionanmiento de la onstrucción y selección de datos, funciones estadísticas, carga y guarda de datos, visualización de datos se emplearon las siguientes librerias:
+
+```{r}
+library(readxl)
+library(writexl)
+library(fmsb)
+
+```
+
+## **1. cargar datos**
+
+Para definir la función para cargar los datos de un archivo CSV, Se utiliza la función `cargar_datos_cephaloscoema` para cargar los datos desde un archivo CSV.
+
+```{r}
+cargar_datos_cephaloscoema <- function() {
+  Cephaloscoema <- read.csv("Cephaloscoema.csv")
+  return(Cephaloscoema)
+}
+cargar_datos_cephaloscoema()
+```
+
+```{r}
+# Convertir los datos a UTF-8
+Cephaloscoema$Size <- iconv(Cephaloscoema$Size, from = "latin1", to = "UTF-8")
+```
+
+## **2. Crear copia con datos faltantes**
+
+- Se define la función `crear_copia_con_na` para crear una copia del dataframe original (Cephaloscoema) con valores `NA` aleatorios.
+- Luego establecemos la semilla para garantizar que los valores aleatorios sean siempre los mismos cada vez que se ejecute el código.
+- Seguido,  se crea una copia del conjunto de datos Cephaloscoema y la guarda en un nuevo objeto llamado
+Cephaloscoema_na.
+- Se asignan 60 valores a reemplazar con NA.
+- La siguiente fila, selecciona aleatoriamente 60 filas del conjunto de datos y los almacena en el vector na_indices.
+- Finalmentte, se reemplazan los valores correspondientes en la columna Size de Cephaloscoema_na con
+NA, utilizando los índices seleccionados.
+
+```{r}
+cargar_datos_cephaloscoema <- function() {
+  Cephaloscoema <- read.csv("Cephaloscoema.csv")
+  return(Cephaloscoema)
+}
+
+Cephaloscoema <- cargar_datos_cephaloscoema()  # Guardar el resultado en la variable Cephaloscoema
+
+# Crear copia con valores NA
+crear_copia_con_na <- function(Cephaloscoema) {
+  set.seed(123)  # Para reproducibilidad
+  Cephaloscoema_na <- Cephaloscoema  # Crear una copia del dataframe
+  num_na <- 60  # Número de valores a reemplazar con NA
+  na_indices <- sample(1:nrow(Cephaloscoema_na), num_na)  # Obtener índices aleatorios para reemplazar con NA
+  Cephaloscoema_na$Size[na_indices] <- NA  # Reemplazar los valores seleccionados en la columna indicada con NA
+  return(Cephaloscoema_na)
+}
+
+Cephaloscoema_na <- crear_copia_con_na(Cephaloscoema)
+```
+
+
+## **3.Guardar el data frame con valores NA aleatorios en un archivo xlsx o excel**
+```{r}
+guardar_dataframe_excel <- function() {
+  writexl::write_xlsx(Cephaloscoema_na,"Cephaloscoema_na.xlsx")
+}
+guardar_dataframe_excel()
+```
+
+## **Estadísticas Descriptivas**
+
+Las funciones empleadas para calcular estadísticas descriptivas por grupo son la media, mediana, varianza, desviación estandar, Rango intercuartil y percentil 90.
+
+### **4. Resumen Estadístico del data frame, incluyendo el conteo de los datos NA**
+
+Se establece la función `obtener_resumen_estadistico` para visualizar los valores estadísticos generales 
+```{r}
+obtener_resumen_estadistico <- function() {
+  resumen <- summary(Cephaloscoema_na)
+  return(resumen)
+}
+obtener_resumen_estadistico()
+```
+### **5. Media del tamaño genereal (ignorando NA)**
+
+Esta función está diseñada para calcular el promedio (media aritmética) de un conjunto de datos contenidos en la columna *Size* del objeto llamado *Cephaloscoema_na*. Dicho cálculo ignora los valores faltantes *(NA)*.
+
+- *Cephaloscoema_na$Size* Se utiliza para acceder a la columna Size del data frame llamado *Cephaloscoema_na*, que contiene datos relacionados con tamaño.
+- La función *mean* calcula la media aritmética. Mientras que el argumento *na.rm = TRUE* ignorar valores faltantes (NA) durante el cálculo. Si no se incluyera, la presencia de valores NA provocará que el resultado fuera NA.
+- *mean_vals* se aplica como variable para que almacene el resultado de la función mean.
+- Al llamar la función *calcular_media()*, se ejecutan los pasos dentro de la función y el resultado final será el promedio de los valores en Cephaloscoema_na$Size, ignorando cualquier NA.
+```{r}
+calcular_media <- function() {
+  mean_vals <- mean(Cephaloscoema_na$Size, na.rm = TRUE) 
+  return(mean_vals)
+}
+calcular_media()
+```
+
+En promedio, el tamaño atípico en la población de los Cephalocoemas miden 6.683843 cm.
+
+## **6. Media del Tamaño por Grupo (ignorando NA)**
+
+La función *calcular_media_por_grupo* calcula la media de la columna Size (tamaño) del data frame Cephaloscoema_na, agrupando los datos según la columna Group. Ignora los valores faltantes (NA) al calcular las medias.
+
+Esta función, *calcular_media_por_grupo*, calcula la media del tamaño por grupo, ignorando los valores faltantes (NA). 
+
+- La función toma los datos de un objeto llamado Cephaloscoema_na y calcula la media de la columna Size por cada categoría del grupo definido en la columna Group.
+- La función *tapply* aplica esta función (media aritmética) a los valores en Size, dentro de cada grupo definido por Group.
+- El argumento *na.rm = TRUE* pasa a la funciónn *mean* para asegurarse de que los valores faltantes (NA) sean ignorados.
+```{r}
+calcular_media_por_grupo <- function() {
+  mean_vals <- tapply(Cephaloscoema_na$Size,Cephaloscoema_na$Group,mean,na.rm = TRUE)
+  return(mean_vals)
+}
+calcular_media_por_grupo()
+```
+
+## **7. Mediana del Tamaño por Grupo (ignorar NA)**
+
+- Para calcular la mediana del peso por grupo ignorando los NA, se usa la función *median*.
+- Se utiliza la función *tapply* para aplicar la función median() sobre la columna Size del conjunto de datos Cephaloscoema_na, agrupada por la variable Group.
+- Finalmete, se incluye el argumento na.rm = TRUE para ingnorar los valores de NA para que no afecte en los cálculos.
+```{r}
+calcular_mediana_por_grupo <- function() {
+  median_vals <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group, median, na.rm = TRUE) 
+  return(median_vals)
+}
+calcular_mediana_por_grupo()
+```
+
+## **8. Varianza del Tamaño por Grupo (ignorar NA)**
+
+La varianza es una medida estadística que describe la dispersión o variabilidad de un conjunto de datos en torno a su media. En este caso, la funció calcula la varianza de los valores de Size para cada grupo definido en Group ignorando los NA.
+
+- Esta línea define una función llamada *calcular_varianza_por_grupo* que no requiere argumentos de entrada, ya que utiliza directamente el data frame Cephaloscoema_na.
+- *Cephaloscoema_na$Size* establece los valores numéricos (Size) sobre los que se calculará la varianza.
+- *Cephaloscoema_na$Group* establece la columna categórica que define los grupos para el cálculo. Los valores de Size se agrupan por estas categorías.
+- *var* es la función que calcula la varianza y Se aplica a los valores de cada grupo.
+_ *na.rm = TRUE* Ignora los valores faltantes (NA) en los cálculos.
+
+```{r}
+calcular_varianza_por_grupo <- function() {
+  var_vals <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group , var, na.rm = TRUE) 
+  return(var_vals)
+}
+calcular_varianza_por_grupo()
+```
+
+## **9. Desviación estándar del Tamaño por Grupo (ignorar NA)**
+
+La desviación estándar es una medida de dispersión que indica cuánto se alejan, en promedio, los valores de un conjunto de datos respecto a su media. Para calcularla se utiliza la función *sd*.
+
+```{r}
+calcular_desviacion_por_grupo <- function() {
+  sd_vals <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group , sd, na.rm = TRUE) 
+  return(sd_vals)
+}
+calcular_desviacion_por_grupo()
+```
+
+## **10. Rango Intercuartil (IQR) del Tamaño por Grupo (ignorar NA)**
+
+El rango intercuartil mide la dispersión de los datos y se calcula como la diferencia
+entre el tercer cuartil y el primer cuartil. En este ejercicio se usa la función *IQR* para obtener el rango intercuartil de la columna Size agrupada por la variable Group. 
+
+```{r}
+calcular_rango_intercuartil_por_grupo <- function() {
+  iqr_vals <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group, IQR, na.rm = TRUE) 
+  return(iqr_vals)
+}
+calcular_rango_intercuartil_por_grupo()
+```
+
+## **11. Percentil 90 del Tamaño por Grupo (ignorar NA)**
+
+La función *quantile* se utiliza para cacular percetiles específicos de un conjunto de datos. El argumento 0.9 en quantile indica el valor por debajo del cual se encuenra el 90% de los datos.
+
+```{r}
+calcular_percentil_90_por_grupo <- function() {
+  perc_90_vals <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group, quantile, 0.9, na.rm = TRUE) 
+  return(perc_90_vals)
+}
+calcular_percentil_90_por_grupo()
+```
+
+# Funciones de Visualización para Cephaloscoema_na por grupo
+  
+## **12. Histograma del tamaño por Grupo (ignorando NA) - Devuelve conteos de frecuencias por grupo**
+
+- La función *crear_histograma_por_grupo* recorre todos los grupos en la columna de Group de Cephaloscoema_na, generando para cada grupo un histograma de la variable Size, excluyendo los valores NA.
+- Para asegurar que la función recorra cada grupo, se implementa la expresión *grupos <- unique(Cephaloscoema_na$Group)*, donde se obtienen los valores únicos en la columna Group.
+- *hist(PlantGrowth_naweight, . . . )+ permite que para cada grupo, se genere un histograma con los valores de Sizs, excluyendo los valores NA.
+- Por otro lado, el argumento *plot = TRUE* se implementa para que el histograma se dibuje en cada iteración.
+- Finalmente, para nombrar al histograma se utilizá el argumento *main*, en el eje horizontal, se usa el argumento *xlab = Tamaño (Size)*, se rellenaron los bordes con *border*, y las barras de azul *col*.
+
+```{r}
+crear_histograma_por_grupo <- function() {
+  grupos <- unique(Cephaloscoema_na$Group)
+  for (grupo in grupos) {
+    hist_data <- subset(Cephaloscoema_na, Group == grupo & !is.na(Size)) 
+    hist(hist_data$Size, 
+         main = paste("Histograma del Grupo", grupo), 
+         xlab = "Tamaño (Size)", 
+         ylab = "Frecuencia", 
+         col = "lightblue", 
+         border = "black", 
+         breaks = 20)  # Ajusta el número de barras si es necesario
+  }
+}
+crear_histograma_por_grupo()
+```
+
+## **13. Diagrama de Caja del tamaño por Grupo (ignorando NA) - Devuelve estadísticas del boxplot por grupo**
+
+Esta funcion se define como *crear_boxplot_por_grupo* para crear un diagrama de caja (boxplot) utilizando los datos de Cephaloscoema_na. 
+
+- El argumento *Size ~ Group* indica que el eje Y (Size) será la variable continua que se analiza, y el eje X (Group) representa los niveles o categorías por las que se agrupaan los datos.
+- *data = Cephaloscoema_na* especifica el conjunto de datos de donde se obtiene las columnas Size y Group.
+- *main* especifica el título del gráfico *Diagrama de Caja del Peso por Grupo*.
+- *xlab y ylab* etiquetas para los ejes:
+xlab = "Grupo" etiqueta el eje X como "Grupo".
+ylab = "Tamaño (Size)" etiqueta el eje Y como "Tamaño".
+- *col* = "lightblue": Define el color de relleno de las cajas.
+- *border* = "black": Define el color del borde de las cajas.
+```{r}
+crear_boxplot_por_grupo <- function() {
+  boxplot(Size ~ Group, data = Cephaloscoema_na, 
+          main = "Diagrama de Caja del Peso por Grupo", 
+          xlab = "Grupo", 
+          ylab = "Tamaño (Size)", 
+          col = "lightblue", 
+          border = "black")
+}
+crear_boxplot_por_grupo()
+```
+
+## **14. Diagrama de Dispersión de tamaño por Grupo (con ruido aleatorio, ignorar NA) - Devuelve número de puntos por grupo**
+
+Para genera el gráfico de dispersión para visualizar los valores de Size agrupados por Group, se define la función, *crear_dispersion_por_grupo*
+
+Dentro de los argumentos se usaron *plot(1, type = "n")* que crea un gráfico vacío (sin puntos) para definir los ejes y la estructura general.
+
+- *xlab = "Grupo", ylab = "Tamaño"* etiqueta los ejes X e Y, respectivamente.
+- *xlim = c(0, length(grupos) + 1)* define los límites del eje X, que van desde 0 hasta el número de grupos más 1. Esto proporciona espacio adicional en los márgenes.
+- *ylim = range(Cephaloscoema_na$Size, na.rm = TRUE)* define los límites del eje Y según el rango de los valores de Size, ignorando valores NA.
+```{r}
+crear_dispersion_por_grupo <- function() {
+  grupos <- unique(Cephaloscoema_na$Group)
+  plot(1, type = "n", xlab = "Grupo", ylab = "Tamaño", xlim = c(0, length(grupos)+1), ylim = range(Cephaloscoema_na$Size, na.rm = TRUE))  # Inicializa el gráfico
+  for (i in 1:length(grupos)) {
+    grupo <- grupos[i]
+    grupo_data <- Cephaloscoema_na[Cephaloscoema_na$Group == grupo & !is.na(Cephaloscoema_na$Size), ]
+    points(rep(i, length(grupo_data$Size)) + rnorm(length(grupo_data$Size), 0, 0.05), grupo_data$Size, col = "blue", pch = 16)
+  }
+  axis(1, at = 1:length(grupos), labels = grupos)
+}
+crear_dispersion_por_grupo()
+```
+## **15. Gráfico de Barras de la Media del Tamaño por Grupo (ignorando NA) - Devuelve medias por grupo**
+
+En este código definos la función, *crear_grafico_barras_por_grupo*, para que genera un gráfico de barras para representar la media de la variable Size agrupada por los niveles de Group. Además, devuelve los valores calculados de las medias por grupo ignorando los valores NA.
+
+- Primeramente se calcula la media.
+- Luego se emplea *barplot* para crear el gráfico de barras.
+- Dentro de los argumentos se establecieron;
+ - medias_por_grupo: Alturas de las barras, una por cada grupo.
+ - main: Título del gráfico.
+ - col = "lightblue": Color de las barras.
+ - xlab = "Grupo": Etiqueta del eje X.
+ - ylab = "Peso Medio": Etiqueta del eje Y.
+```{r}
+crear_grafico_barras_por_grupo <- function() {
+  medias_por_grupo <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group, mean, na.rm = TRUE)
+  barplot(medias_por_grupo, 
+          main = "Media del Peso por Grupo", 
+          col = "lightblue", 
+          xlab = "Grupo", 
+          ylab = "Peso Medio")
+  return(medias_por_grupo)
+}
+crear_grafico_barras_por_grupo()
+```
+ 
+## **16. Gráfico de Torta de la Media del Tamaño por Grupo (ignorando NA)**
+ 
+```{r}
+Crear_diagrama_de_torta<-function(){
+  
+calcular_media_por_grupo <- function(Cephaloscoema_na) {
+  mean_vals <- tapply(Cephaloscoema_na$Size, Cephaloscoema_na$Group, mean, na.rm = TRUE)
+  return(mean_vals)
+}
+media_por_grupo <- calcular_media_por_grupo(Cephaloscoema_na)
+
+porcentajes <- round(100 * media_por_grupo / sum(media_por_grupo), 1)
+
+labels <- paste(names(media_por_grupo), "(", porcentajes, "%)", sep = "")
+pie(media_por_grupo, 
+    labels = labels, 
+    main = "Media del Tamaño por Grupo", 
+    col = rainbow(length(media_por_grupo)))
+}
+Crear_diagrama_de_torta()
+```
+```{r}
+warnings(
+  
+)
+```
+ 
